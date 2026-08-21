@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Vard-vast</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        html, body {
+            background-color: #364738;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+        }
+        #mainDiv {
+            text-align: center;
+            padding: 15%;
+            position: relative;
+            z-index: 2;
+            background-color: #364738;
+            min-height: 100vh;
+        }
+        #playGame {
+            width: 15%;
+            min-width: 140px;
+            height: 50px;
+            border: none;
+            background-color: #DAA520FF;
+            border-radius: 10px;
+            font-size: 20px;
+            box-shadow: #272525 10px 10px 30px;
+            margin: 10px;
+            cursor: pointer;
+        }
+        #nickName {
+            width: 20%;
+            min-width: 220px;
+            height: 40px;
+            border: none;
+            border-radius: 10px;
+            font-size: 20px;
+            background-color: aliceblue;
+            padding: 0 12px;
+        }
+        #nickName:focus {
+            outline: none;
+        }
+        #playGame:hover {
+            background-color: #c8961c;
+        }
+        #authorCredits {
+            position: fixed;
+            left: 16px;
+            bottom: 16px;
+            z-index: 2;
+            color: rgba(255, 255, 255, 0.8);
+            font-family: Verdana, sans-serif;
+            font-size: 14px;
+            line-height: 1.35;
+            pointer-events: none;
+        }
+        #authorCredits .author-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #fff;
+        }
+        #canvas {
+            position: fixed;
+            inset: 0;
+            background-color: #364738;
+            z-index: 1;
+        }
+        #chatPanel {
+            position: fixed;
+            left: 16px;
+            bottom: 18px;
+            z-index: 4;
+            width: 340px;
+            height: 260px;
+            display: none;
+            flex-direction: column;
+            background: rgba(0, 0, 0, 0.88);
+            border: 1px solid #2a2a2a;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+            overflow: hidden;
+            font-family: Verdana, sans-serif;
+        }
+        #chatPanel.collapsed {
+            height: auto;
+        }
+        #chatHeader {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 10px;
+            background: rgba(0, 0, 0, 0.95);
+            border-bottom: 1px solid #2a2a2a;
+            color: #ccc;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+        #chatPanel.collapsed #chatHeader {
+            border-bottom: none;
+        }
+        #chatToggleBtn {
+            width: 28px;
+            height: 24px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            background: #1a1a1a;
+            color: #ddd;
+            font-size: 16px;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0;
+        }
+        #chatToggleBtn:hover {
+            background: #2a2a2a;
+            border-color: #666;
+        }
+        #chatBody {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+        }
+        #chatPanel.collapsed #chatBody {
+            display: none;
+        }
+        #chatMessages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            scrollbar-color: #444 #111;
+            scrollbar-width: thin;
+        }
+        #chatMessages::-webkit-scrollbar {
+            width: 8px;
+        }
+        #chatMessages::-webkit-scrollbar-track {
+            background: #111;
+        }
+        #chatMessages::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 4px;
+        }
+        .chat-message {
+            color: #e8e8e8;
+            font-size: 14px;
+            line-height: 1.35;
+            word-break: break-word;
+        }
+        .chat-name {
+            color: #7ecbff;
+            font-weight: bold;
+        }
+        #chatInputRow {
+            border-top: 1px solid #2a2a2a;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.95);
+        }
+        #chatInput {
+            width: 100%;
+            height: 34px;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 0 10px;
+            font-size: 14px;
+            background: #111;
+            color: #f0f0f0;
+            outline: none;
+        }
+        #chatInput:focus {
+            border-color: #555;
+        }
+        #chatInput::placeholder {
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="canvas" width="0" height="0"></canvas>
+<div id="authorCredits">
+    <div>The game was made by:</div>
+    <div class="author-name">Borovik Nikita</div>
+</div>
+<div id="mainDiv">
+    <div id="chooseNick">
+        <input id="nickName" type="text" maxlength="20" placeholder="Enter nickname">
+    </div>
+    <div id="play">
+        <button id="playGame">Play Game</button>
+    </div>
+</div>
+
+<div id="chatPanel">
+    <div id="chatHeader">
+        <span>Chat</span>
+        <button id="chatToggleBtn" type="button" title="Свернуть чат">−</button>
+    </div>
+    <div id="chatBody">
+        <div id="chatMessages"></div>
+        <div id="chatInputRow">
+            <input id="chatInput" type="text" maxlength="200" placeholder="Type a message...">
+        </div>
+    </div>
+</div>
+
+
+<script src="clanUI.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
