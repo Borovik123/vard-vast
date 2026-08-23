@@ -1,4 +1,5 @@
 import settings from "./settings.js";
+import { gameObjectManager } from "./gameObjects.js";
 import crypto from "crypto";
 import { getCraftRecipe, isRecipeForStation } from "./crafts.js";
 import { StationCraftQueue } from "./craftQueueCore.js";
@@ -123,6 +124,7 @@ export function placeCampfire(cell, type, playerX, playerY, ownerId = null, rota
   const campfire = new Campfire(type, playerX, playerY, ownerId);
   campfire.rotation = normalizeRotation(rotation);
   cell.campfire = campfire;
+  gameObjectManager.register("campfire", cell, campfire);
   return true;
 }
 
@@ -130,9 +132,11 @@ export function removeCampfire(cell) {
   const campfire = cell?.campfire;
   if (!campfire) return null;
   cell.campfire = null;
+  gameObjectManager.unregister("campfire", cell, campfire);
   return campfire;
 }
 
 export function processCampfires(cells, now, deltaSeconds = 1 / 60) {
-  for (const cell of cells) if (cell.campfire) cell.campfire.tick(now, deltaSeconds);
+  // Backwards-compatible wrapper. New code uses GameObjectManager.
+  for (const cell of cells ?? []) if (cell.campfire) cell.campfire.tick(now, deltaSeconds);
 }

@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { getCraftRecipe, isRecipeForStation } from "./crafts.js";
 import { StationCraftQueue } from "./craftQueueCore.js";
 import { ENTITY_TYPES, normalizeRotation } from "./entityTypes.js";
+import { gameObjectManager } from "./gameObjects.js";
 
 export class Workbench {
   constructor(x, y, ownerId = null) {
@@ -60,6 +61,7 @@ export function placeWorkbench(cell, x, y, ownerId = null, rotation = 0) {
   wb.hitboxRotation = normalizeRotation(wb.rotation + 1);
   cell.workbench = wb;
   cell.building = wb;
+  gameObjectManager.register("workbench", cell, wb);
   return true;
 }
 export function removeWorkbench(cell) {
@@ -67,6 +69,7 @@ export function removeWorkbench(cell) {
   if (!wb) return null;
   cell.workbench = null;
   if (cell.building === wb) cell.building = null;
+  gameObjectManager.unregister("workbench", cell, wb);
   return wb;
 }
 export function processWorkbenches(cells, now, deltaSeconds) {

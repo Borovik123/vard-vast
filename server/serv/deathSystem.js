@@ -113,6 +113,9 @@ export function createDeathSystem({ wsHub, players, cellsList, corpseList, clanS
   }
 
   function removePlayerFromWorld(player) {
+    cellsList?.unsubscribePlayer?.(player.id, player.visibleCells);
+    player.visibleCells = [];
+    player.subscribedCells?.clear?.();
     player.inGame = false;
     player.isAlive = false;
     player.vector = [];

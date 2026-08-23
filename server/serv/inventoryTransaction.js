@@ -1,31 +1,25 @@
-/**
- * Small transaction layer for the authoritative inventory.
- * Inventory is only 8 slots, so a snapshot is cheap and makes multi-step
- * operations atomic: either every change is committed or the original state
- * is restored.
- */
 export function cloneInventory(inventory) {
-    return (inventory ?? []).map((slot) =>
-      slot ? { itemId: slot.itemId, amount: slot.amount } : null
-    );
-  }
-  
-  export function restoreInventory(inventory, snapshot) {
-    inventory.length = 0;
-    for (const slot of snapshot) inventory.push(slot ? { ...slot } : null);
-  }
-  
-  export function runInventoryTransaction(inventory, operation) {
-    const snapshot = cloneInventory(inventory);
-    try {
-      const result = operation();
-      if (result === false || result?.ok === false) {
-        restoreInventory(inventory, snapshot);
-        return { ok: false, result };
-      }
-      return { ok: true, result };
-    } catch (error) {
+  return (inventory ?? []).map((slot) =>
+    slot ? { itemId: slot.itemId, amount: slot.amount } : null
+  );
+}
+
+export function restoreInventory(inventory, snapshot) {
+  inventory.length = 0;
+  for (const slot of snapshot) inventory.push(slot ? { ...slot } : null);
+}
+
+export function runInventoryTransaction(inventory, operation) {
+  const snapshot = cloneInventory(inventory);
+  try {
+    const result = operation();
+    if (result === false || result?.ok === false) {
       restoreInventory(inventory, snapshot);
-      throw error;
+      return { ok: false, result };
     }
+    return { ok: true, result };
+  } catch (error) {
+    restoreInventory(inventory, snapshot);
+    throw error;
   }
+}

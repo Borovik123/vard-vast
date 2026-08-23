@@ -464,14 +464,29 @@ export function broadcastAlertIfNeeded(wsHub, players, player, oldHp) {
 
 // ---- УВЕДОМЛЕНИЕ КЛЕТОК ----
 export function notifyCellSubscribers(wsHub, cell, type, data) {
+  if (!cell || !cell.subscribers) return;
+
   const payload = {
     indexX: cell.indexX,
     indexY: cell.indexY,
     ...data,
   };
 
-  for (let i = 0; i < cell.subscribers.length; i++) {
-    wsHub.sendToClientId(cell.subscribers[i], type, payload);
+  // Cells now keep subscribers in a Set for O(1) add/remove and to avoid
+  // duplicate subscriptions. Keep this helper compatible with older array
+  // cells as well, because it is the central fan-out point for all world
+  // state/events (buildings, workbenches, saplings, ground items, hits, etc.).
+  if (cell.subscribers instanceof Set) {
+    for (const clientId of cell.subscribers) {
+      wsHub.sendToClientId(clientId, type, payload);
+    }
+    return;
+  }
+
+  if (Array.isArray(cell.subscribers)) {
+    for (let i = 0; i < cell.subscribers.length; i++) {
+      wsHub.sendToClientId(cell.subscribers[i], type, payload);
+    }
   }
 }
 

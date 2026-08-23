@@ -3267,11 +3267,6 @@ function getCraftJobProgress(job) {
   };
 }
 
-function pointInRect(px, py, r) {
-  return px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h;
-}
-
-
 function handleCraftPointerDown(event) {
   if (event.button !== 0) return false;
 

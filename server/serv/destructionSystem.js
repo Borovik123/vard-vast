@@ -2,6 +2,7 @@ import { removeCampfire } from "./campfire.js";
 import { removeWorkbench } from "./workbench.js";
 import { ENTITY_TYPES } from "./entityTypes.js";
 import { getSaplingDef } from "./saplings.js";
+import { gameObjectManager } from "./gameObjects.js";
 
 /** Single authoritative removal path for player-built structures. */
 export function destroyOwnedStructures({ player, cellsList }) {
@@ -46,9 +47,11 @@ export function destroyOwnedStructures({ player, cellsList }) {
     } else if (entityType === ENTITY_TYPES.SAPLING) {
       removed = cell.sapling;
       cell.sapling = null;
+      if (removed) gameObjectManager.unregister("sapling", cell, removed);
     } else if (entityType === ENTITY_TYPES.BUILDING) {
       removed = cell.building;
       cell.building = null;
+      if (removed) gameObjectManager.unregister("building", cell, removed);
     }
 
     if (!removed) continue;

@@ -1,4 +1,5 @@
 import settings from "./settings.js";
+import { gameObjectManager } from "./gameObjects.js";
 
 /** Drawn first (behind bushes / rocks / players / trees). */
 export const SAPLING_DRAW_LAYER = 5;
@@ -72,7 +73,9 @@ export function hasSapling(cell) {
 
 export function clearSapling(cell) {
   if (!cell) return;
+  const previous = cell.sapling;
   cell.sapling = null;
+  if (previous) gameObjectManager.unregister("sapling", cell, previous);
 }
 
 export function canPlantOnCell(cell) {
@@ -104,6 +107,7 @@ export function plantSapling(cell, kind, now = performance.now(), ownerId = null
     ownerId: ownerId ?? null,
     rotation: ((Number(rotation) || 0) % 4 + 4) % 4,
   };
+  gameObjectManager.register("sapling", cell, cell.sapling);
   return cell.sapling;
 }
 
@@ -134,29 +138,33 @@ export function serializeSapling(cell) {
  * Advance growth / expire. Returns list of { cell, event }.
  * event: "stage" | "expired"
  */
-export function processSaplings(cells, now = performance.now()) {
-  const changed = [];
-  const life = lifetimeMs();
-  const stageDur = stageMs();
-
-  for (let i = 0; i < cells.length; i++) {
-    const cell = cells[i];
-    const s = cell.sapling;
-    if (!s?.kind || s.hp <= 0) continue;
-
-    if (now - s.plantedAt >= life) {
-      clearSapling(cell);
-      changed.push({ cell, event: "expired", kind: s.kind });
-      continue;
-    }
-
-    if (s.stage < 2 && now - s.stageAt >= stageDur) {
-      s.stage += 1;
-      s.stageAt = now;
-      changed.push({ cell, event: "stage", kind: s.kind, stage: s.stage });
-    }
+export function processSaplingObject(sapling, cell, now = performance.now()) {
+  if (!sapling?.kind || sapling.hp <= 0) {
+    if (sapling) clearSapling(cell);
+    return null;
   }
 
+  if (now - sapling.plantedAt >= lifetimeMs()) {
+    const kind = sapling.kind;
+    clearSapling(cell);
+    return { event: "expired", kind };
+  }
+
+  if (sapling.stage < 2 && now - sapling.stageAt >= stageMs()) {
+    sapling.stage += 1;
+    sapling.stageAt = now;
+    return { event: "stage", kind: sapling.kind, stage: sapling.stage };
+  }
+  return null;
+}
+
+export function processSaplings(cells, now = performance.now()) {
+  const changed = [];
+  for (const cell of cells ?? []) {
+    if (!cell?.sapling) continue;
+    const result = processSaplingObject(cell.sapling, cell, now);
+    if (result) changed.push({ cell, ...result });
+  }
   return changed;
 }
 

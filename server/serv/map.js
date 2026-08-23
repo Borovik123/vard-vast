@@ -14,7 +14,7 @@ export class NatureObject {
 export class Cell {
   constructor(params) {
     this.type = params.eType;
-    this.subscribers = [];
+    Object.defineProperty(this, "subscribers", { value: new Set(), writable: true, enumerable: false });
     this.x = params.x;
     this.y = params.y;
     this.color = params.color;
@@ -75,6 +75,9 @@ export class CellsList {
 
   getVisibleCells(xPlayer, yPlayer, idPlayer, playersList = null) {
     this.VisibleList = [];
+    const player = playersList?.findById?.(idPlayer) ?? playersList?.list?.find?.((p) => p.id === idPlayer) ?? null;
+    const previousCells = player?.visibleCells ?? [];
+    const nextCells = [];
     const playerXCell = Math.ceil(xPlayer / settings.CELL_SIDE_LENGTH_PIXEL);
     const playerYCell = Math.ceil(yPlayer / settings.CELL_SIDE_LENGTH_PIXEL);
 
@@ -103,12 +106,15 @@ export class CellsList {
           cell._campfireData = null;
         }
 
-        if (!cell.subscribers.includes(idPlayer)) {
-          cell.subscribers.push(idPlayer);
-        }
-
+        cell.subscribers.add(idPlayer);
+        nextCells.push(cell);
         this.VisibleList.push(cell);
       }
+    }
+
+    const nextSet = new Set(nextCells);
+    for (const cell of previousCells) {
+      if (!nextSet.has(cell)) cell.subscribers.delete(idPlayer);
     }
 
     playersList?.addVisibleCells(
@@ -118,6 +124,11 @@ export class CellsList {
       playerYCell
     );
     return this.VisibleList;
+  }
+
+  unsubscribePlayer(idPlayer, cells = null) {
+    const source = cells ?? this.list;
+    for (const cell of source) cell?.subscribers?.delete?.(idPlayer);
   }
 
   /**

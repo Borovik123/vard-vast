@@ -1,6 +1,7 @@
 import settings from "./settings.js"; 
 import { getItemDef, getAllItems } from "./items.js"; 
-import { ENTITY_TYPES } from "./entityTypes.js"; 
+import { ENTITY_TYPES } from "./entityTypes.js";
+import { gameObjectManager } from "./gameObjects.js"; 
 
 let groundLootSeq = 0; 
 function makeGroundLootId() { 
@@ -28,11 +29,13 @@ function syncGroundItemMirror(cell) {
 export function clearGroundItem(cell, lootId = null) { 
   if (!cell) return; 
   if (!lootId) { 
+    for (const loot of getGroundItems(cell)) gameObjectManager.unregisterGroundItem(cell, loot.id);
     cell.groundItems = null; 
     cell.groundItem = null; 
     return; 
   } 
   const next = getGroundItems(cell).filter((loot) => loot.id !== lootId); 
+  gameObjectManager.unregisterGroundItem(cell, lootId);
   cell.groundItems = next.length ? next : null; 
   cell.groundItem = next[0] ?? null; 
 } 
@@ -70,6 +73,7 @@ export function setGroundItem(cell, itemId, amount = 1, worldX, worldY) {
     }), 
   ]; 
   cell.groundItem = cell.groundItems[0]; 
+  gameObjectManager.registerGroundItem(cell, cell.groundItems[0]);
   return true; 
 } 
 
@@ -101,6 +105,7 @@ export function addGroundItem(
   items.push(loot); 
   cell.groundItems = items; 
   cell.groundItem = items[0]; 
+  gameObjectManager.registerGroundItem(cell, loot);
   return loot; 
 } 
 
@@ -112,37 +117,40 @@ function shuffleInPlace(array) {
   return array;
 }
 
-export function spawnGroundItemsOnMap(cells) { 
-  const total = cells.length; 
-  const changed = []; 
+export function spawnGroundItemsOnMap(cells) {
+  const total = cells.length;
+  const changed = [];
+  const spawnableItems = getAllItems().filter((item) => item.groundSpawnPercent > 0);
+  if (!spawnableItems.length || !total) return changed;
 
-  for (const item of getAllItems()) { 
-    if (item.groundSpawnPercent <= 0) continue; 
+  const counts = new Map(spawnableItems.map((item) => [item.id, 0]));
+  const eligible = [];
 
-    const target = Math.round((total * item.groundSpawnPercent) / 100); 
-    let current = 0; 
-    for (let i = 0; i < cells.length; i++) { 
-      current += getGroundItems(cells[i]).filter((g) => g.itemId === item.id) 
-        .length; 
-    } 
+  // One pass over the map instead of one full scan per item type.
+  for (const cell of cells) {
+    const ground = getGroundItems(cell);
+    if (cell.natureType === "empty" && ground.length === 0) eligible.push(cell);
+    for (const loot of ground) {
+      if (counts.has(loot.itemId)) counts.set(loot.itemId, counts.get(loot.itemId) + 1);
+    }
+  }
 
-    const need = target - current; 
-    if (need <= 0) continue; 
+  for (const item of spawnableItems) {
+    const target = Math.round((total * item.groundSpawnPercent) / 100);
+    let need = target - (counts.get(item.id) ?? 0);
+    if (need <= 0 || !eligible.length) continue;
 
-    const eligible = cells.filter( 
-      (c) => c.natureType === "empty" && getGroundItems(c).length === 0 
-    ); 
-    shuffleInPlace(eligible); 
+    shuffleInPlace(eligible);
+    const place = Math.min(need, eligible.length);
+    for (let i = 0; i < place; i++) {
+      const cell = eligible[i];
+      if (!setGroundItem(cell, item.id, 1)) continue;
+      changed.push(cell);
+    }
+  }
 
-    const place = Math.min(need, eligible.length); 
-    for (let i = 0; i < place; i++) { 
-      setGroundItem(eligible[i], item.id, 1); 
-      changed.push(eligible[i]); 
-    } 
-  } 
-
-  return changed; 
-} 
+  return changed;
+}
 
 export function findNearestGroundItem(cellsList, x, y, radius) { 
   const pickRadius = radius + 8; 
@@ -264,40 +272,22 @@ export function placeItemOnGround(
   return addGroundItem(cell, itemId, amount, x, y, { pickableDelayMs }); 
 } 
 
-export function expireGroundItemsOnMap(cells) { 
-  const now = performance.now(); 
-  const changed = []; 
-
-  for (let i = 0; i < cells.length; i++) { 
-    const cell = cells[i]; 
-    const items = getGroundItems(cell); 
-    if (!items.length) continue; 
-
-    const kept = []; 
-    let removed = false; 
-    for (let j = 0; j < items.length; j++) { 
-      const loot = items[j]; 
-      const removeAt = 
-        loot.removeAt ?? 
-        (loot.expiresAt != null 
-          ? loot.expiresAt + groundShrinkMs() 
-          : Infinity); 
-      if (now >= removeAt) { 
-        removed = true; 
-        continue; 
-      } 
-      kept.push(loot); 
-    } 
-
-    if (removed) { 
-      cell.groundItems = kept.length ? kept : null; 
-      cell.groundItem = kept[0] ?? null; 
-      changed.push(cell); 
-    } 
-  } 
-
-  return changed; 
-} 
+export function expireGroundItemsOnMap(cells) {
+  const now = performance.now();
+  const changed = new Set();
+  for (const entry of gameObjectManager.getGroundItems()) {
+    const loot = entry.object;
+    const removeAt = loot.removeAt ?? (loot.expiresAt != null ? loot.expiresAt + groundShrinkMs() : Infinity);
+    if (now < removeAt) continue;
+    const cell = entry.cell;
+    const items = getGroundItems(cell).filter((item) => item.id !== loot.id);
+    gameObjectManager.unregisterGroundItem(cell, loot.id);
+    cell.groundItems = items.length ? items : null;
+    cell.groundItem = items[0] ?? null;
+    changed.add(cell);
+  }
+  return [...changed];
+}
 
 export function stampGroundItemsForNetwork(cells) { 
   const now = performance.now(); 

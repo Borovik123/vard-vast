@@ -112,19 +112,3 @@ export function move(application, deltaMs = 1000 / 60) {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

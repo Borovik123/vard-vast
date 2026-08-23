@@ -352,6 +352,7 @@ wsHub.onConnection((ws, type, data) => {
     const disconnectedId = ws.clientId;
     const disconnectedPlayer = findPlayer(disconnectedId);
     if (disconnectedPlayer && clanSystem) clanSystem.onOwnerGone(disconnectedPlayer);
+    if (disconnectedPlayer) application.cellsList.unsubscribePlayer?.(disconnectedId, disconnectedPlayer.visibleCells);
     notifyDisconnect(wsHub, application.playersList.list, disconnectedId);
     const index = application.playersList.list.findIndex((player) => player.id === disconnectedId);
     if (index !== -1) {

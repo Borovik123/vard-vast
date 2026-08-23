@@ -6,6 +6,7 @@ import { placeWorkbench } from "./workbench.js";
 import { normalizeRotation } from "./entityTypes.js";
 import { runInventoryTransaction } from "./inventoryTransaction.js";
 import { Building, getBuildingDef, isBuildingItem, getDoorTargetCell, getDoorTransformAtProgress, DOOR_ANIM_MS, DEFAULT_DOOR_OPEN_DIRECTION, normalizeDoorOpenDirection } from "./buildings.js";
+import { gameObjectManager } from "./gameObjects.js";
 
 export function createBuildingSystem({ cellsList, players = [], clanSystem = null }) {
   const builders = new Map([
@@ -62,13 +63,12 @@ export function createBuildingSystem({ cellsList, players = [], clanSystem = nul
     if (!cell || occupied(cell)) return { ok:false, reason:"occupied" };
 
     // An open door reserves its destination cell as well as its source cell.
-    for (const c of cellsList.list) {
-      const b = c.building;
+    for (const entry of gameObjectManager.get("building")) {
+      const c = entry.cell;
+      const b = entry.object;
       if (!b || b.kind !== "door" || String(b.state).toUpperCase() !== "OPEN") continue;
       const target = getDoorTargetCell(c.indexX, c.indexY, b.rotation, b.openDirection);
-      if (target.indexX === cell.indexX && target.indexY === cell.indexY) {
-        return { ok:false, reason:"occupied" };
-      }
+      if (target.indexX === cell.indexX && target.indexY === cell.indexY) return { ok:false, reason:"occupied" };
     }
 
     if (!hasItem(player, itemId)) return { ok:false, reason:"missing-item" };
@@ -84,6 +84,7 @@ export function createBuildingSystem({ cellsList, players = [], clanSystem = nul
           b.reservationCells = [{ indexX: cell.indexX, indexY: cell.indexY }];
         }
         cell.building = b;
+        gameObjectManager.register("building", cell, b);
         return { kind:"building", cell, object:b };
       }
 
@@ -203,33 +204,35 @@ export function createBuildingSystem({ cellsList, players = [], clanSystem = nul
     return { ok:false, reason:"unknown" };
   }
 
+  function processObject(b, cell, now) {
+    if (!b || b.kind !== "door") return null;
+    const state = String(b.state ?? "CLOSED").toUpperCase();
+    if (state !== "OPENING" && state !== "CLOSING") return null;
+
+    const t = Math.min(1, Math.max(0, (now - b.doorStartedAt) / DOOR_ANIM_MS));
+    b.doorProgress = state === "OPENING" ? t : 1 - t;
+    if (t < 1) return null;
+
+    if (state === "OPENING") {
+      b.state = "OPEN";
+      b.doorProgress = 1;
+      const target = getDoorTargetCell(cell.indexX, cell.indexY, b.rotation, b.openDirection);
+      b.playerCollisionCells = [{ indexX: target.indexX, indexY: target.indexY }];
+    } else {
+      b.state = "CLOSED";
+      b.doorProgress = 0;
+      b.playerCollisionCells = [{ indexX: cell.indexX, indexY: cell.indexY }];
+    }
+    return true;
+  }
+
   function process(now) {
     const changed = [];
-    for (const cell of cellsList.list) {
-      const b = cell.building;
-      if (!b || b.kind !== "door") continue;
-      const state = String(b.state ?? "CLOSED").toUpperCase();
-      if (state !== "OPENING" && state !== "CLOSING") continue;
-
-      const t = Math.min(1, Math.max(0, (now - b.doorStartedAt) / DOOR_ANIM_MS));
-      b.doorProgress = state === "OPENING" ? t : 1 - t;
-
-      if (t >= 1) {
-        if (state === "OPENING") {
-          b.state = "OPEN";
-          b.doorProgress = 1;
-          const target = getDoorTargetCell(cell.indexX, cell.indexY, b.rotation, b.openDirection);
-          b.playerCollisionCells = [{ indexX: target.indexX, indexY: target.indexY }];
-        } else {
-          b.state = "CLOSED";
-          b.doorProgress = 0;
-          b.playerCollisionCells = [{ indexX: cell.indexX, indexY: cell.indexY }];
-        }
-        changed.push(cell);
-      }
+    for (const entry of gameObjectManager.get("building")) {
+      if (processObject(entry.object, entry.cell, now)) changed.push(entry.cell);
     }
     return changed;
   }
 
-  return { place, toggleDoor, canOpenDoor, process };
+  return { place, toggleDoor, canOpenDoor, process, processObject };
 }

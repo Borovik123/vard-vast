@@ -6,6 +6,7 @@ import { getToolProfile } from "./items.js";
 import { removeCampfire } from "./campfire.js";
 import { removeWorkbench } from "./workbench.js";
 import { getBuildingDef } from "./buildings.js";
+import { gameObjectManager } from "./gameObjects.js";
 
 /**
  * Сохраняет позицию атаки для игрока.
@@ -249,7 +250,10 @@ export function resolveNatureAttackHit(attacker, cellsList, players = []) {
         buildingId:b.buildingId,
         destroyedBuilding,
       });
-      if (destroyed) cell.building = null;
+      if (destroyed) {
+        cell.building = null;
+        gameObjectManager.unregister("building", cell, b);
+      }
       continue;
     }
 

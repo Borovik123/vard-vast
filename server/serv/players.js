@@ -19,6 +19,7 @@ export class Player {
     this.angle = 0;
     this.text = [];
     this.visibleCells = [];
+    this.subscribedCells = new Set();
     this.playerXCell = 0;
     this.playerYCell = 0;
     this.radius = settings.PLAYER_RADIUS;
@@ -180,6 +181,7 @@ export class PlayersList {
     for (let i = 0; i < this.list.length; i++) {
       if (id === this.list[i].id) {
         this.list[i].visibleCells = visibleCellsList;
+        this.list[i].subscribedCells = new Set(visibleCellsList ?? []);
         this.list[i].playerXCell = xCell;
         this.list[i].playerYCell = yCell;
       }
@@ -237,19 +239,4 @@ export function sanitizePlayer(player) {
 export function getActivePlayers(players) {
   return players.filter((player) => player.isAlive && player.inGame);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
