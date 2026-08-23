@@ -49,8 +49,8 @@ export const NATURE_OBJECTS = {
     id: "tree",
     label: "Tree",
     category: "plant",
-    spawnChancePercent: 10,
-    hp: 150,
+    spawnChancePercent: 10.5,
+    hp: 250,
     hitboxRadius: 90,
     blocksMovement: true,
     destructible: true,
@@ -65,7 +65,7 @@ export const NATURE_OBJECTS = {
     id: "stone",
     label: "Stone",
     category: "resource",
-    spawnChancePercent: 5,
+    spawnChancePercent: 4,
     hp: 1000,
     hitboxRadius: 100,
     blocksMovement: true,
@@ -95,8 +95,8 @@ export const NATURE_OBJECTS = {
     id: "blueberry",
     label: "Blueberry bush",
     category: "plant",
-    spawnChancePercent: 0.5,
-    hp: 200,
+    spawnChancePercent: 0.3,
+    hp: 50,
     hitboxRadius: 66,
     blocksMovement: true,
     destructible: true,
@@ -108,8 +108,8 @@ export const NATURE_OBJECTS = {
     id: "sulfur",
     label: "Sulfur",
     category: "ore",
-    spawnChancePercent: 0.2,
-    hp: 200,
+    spawnChancePercent: 0.1,
+    hp: 2000,
     hitboxRadius: 63,
     blocksMovement: true,
     destructible: true,
@@ -121,8 +121,8 @@ export const NATURE_OBJECTS = {
     id: "wildberry",
     label: "Wildberry bush",
     category: "plant",
-    spawnChancePercent: 0.5,
-    hp: 100,
+    spawnChancePercent: 0.2,
+    hp: 50,
     hitboxRadius: 50,
     blocksMovement: true,
     destructible: true,
@@ -280,5 +280,19 @@ export function getNatureClientCatalog() {
     images: def.images.map((img) => img.key),
   }));
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

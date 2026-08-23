@@ -4,25 +4,25 @@ export const CRAFT_RECIPES = [
     id: "blueberry_seed", station: "campfire", label: "Blueberry seed",
     description: "Plant on soil to grow a blueberry bush.",
     info: "Craft time: 10s (5s in improved campfire)",
-    result: { itemId: "blueberrySeed", amount: 1 }, ingredients: [{ itemId: "blueberry", amount: 5 }], durationMs: 10000,
+    result: { itemId: "blueberrySeed", amount: 1 }, ingredients: [{ itemId: "blueberry", amount: 5 }], durationMs: 30000,
   },
   {
     id: "wildberry_seed", station: "campfire", label: "Wildberry seed",
     description: "Plant on soil to grow a wildberry bush.",
     info: "Craft time: 10s (5s in improved campfire)",
-    result: { itemId: "wildberrySeed", amount: 1 }, ingredients: [{ itemId: "wildberry", amount: 5 }], durationMs: 10000,
+    result: { itemId: "wildberrySeed", amount: 1 }, ingredients: [{ itemId: "wildberry", amount: 5 }], durationMs: 30000,
   },
   {
     id: "wood_spear", station: "normal", label: "Wood Spear", description: "A basic throwing spear.", info: "Damage: 100",
-    result: { itemId: "spear", amount: 1 }, ingredients: [{ itemId: "wood", amount: 10 }], durationMs: 2000,
+    result: { itemId: "spear", amount: 1 }, ingredients: [{ itemId: "wood", amount: 150 }], durationMs: 20000,
   },
   {
     id: "campfire", station: "normal", label: "Campfire", description: "A basic campfire.", info: "HP: 300",
-    result: { itemId: "campfire", amount: 1 }, ingredients: [{ itemId: "stone", amount: 10 }, { itemId: "wood", amount: 50 }], durationMs: 15000,
+    result: { itemId: "campfire", amount: 1 }, ingredients: [{ itemId: "stone", amount: 10 }, { itemId: "wood", amount: 50 }], durationMs: 20000,
   },
   {
-    id: "campfire_max", station: "normal", label: "Improved Campfire", description: "An advanced campfire.", info: "HP: 500, crafts 2x faster",
-    result: { itemId: "campfire_max", amount: 1 }, ingredients: [{ itemId: "stone", amount: 30 }, { itemId: "wood", amount: 100 }], durationMs: 20000,
+    id: "campfire_max", station: "workbench", label: "Improved Campfire", description: "An advanced campfire.", info: "HP: 500, crafts 2x faster",
+    result: { itemId: "campfire_max", amount: 1 }, ingredients: [{ itemId: "stone", amount: 30 }, { itemId: "wood", amount: 150 }, { itemId: "ironOre", amount: 5 }], durationMs: 60000,
   },
   {
     id: "workbench", station: "normal", label: "Workbench", description: "A crafting station.", info: "HP: 400",
